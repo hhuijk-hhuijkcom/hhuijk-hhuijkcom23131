@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>hhuijk - 解锁库</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a14;--card:#141428;--border:#2a2a3e;--accent:#4a7fd4;--accent-hover:#3a6fb4;
+  --text:#ccc;--text-bright:#e0e0e0;--text-muted:#666680;--danger:#ef4444;--success:#22c55e;
+  --red:#f87171;--blue:#60a5fa;--green:#4ade80;--yellow:#facc15;--purple:#c084fc;--gray:#9ca3af;
+}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Header */
+header{text-align:center;padding:20px 16px 16px;border-bottom:1px solid var(--border)}
+header h1{font-size:1.5rem;color:var(--text-bright)}
+header p{font-size:0.875rem;color:var(--text-muted);margin-top:4px}
+.source-info{font-size:0.75rem;color:var(--text-muted);margin-top:8px}
+
+/* Tabs */
+.tabs{display:flex;justify-content:center;gap:6px;padding:16px 16px 12px;flex-wrap:wrap}
+.tab{padding:8px 20px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text-muted);cursor:pointer;font-size:0.875rem;transition:all .2s;font-family:inherit}
+.tab:hover{color:var(--text);background:#1a1a2e}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tab .count{margin-left:6px;font-size:0.75rem;opacity:.7}
+
+/* Toolbar */
+.toolbar{display:flex;justify-content:space-between;align-items:center;padding:0 20px 16px;gap:12px;flex-wrap:wrap}
+.search{flex:1;max-width:320px;position:relative}
+.search input{width:100%;padding:8px 12px 8px 36px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.875rem;font-family:inherit;outline:none;transition:border-color .2s}
+.search input:focus{border-color:var(--accent)}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted)}
+.toolbar-right{display:flex;align-items:center;gap:8px}
+.refresh-btn{padding:8px 16px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:0.875rem;display:flex;align-items:center;gap:6px;transition:all .2s;font-family:inherit}
+.refresh-btn:hover{background:#1a1a2e}
+.refresh-btn:disabled{opacity:.5;cursor:not-allowed}
+.refresh-btn svg.spin{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Status */
+.status{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:0.875rem}
+.status.error{color:var(--danger)}
+.progress-bar{width:200px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0;overflow:hidden}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
+
+/* Grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px;padding:0 20px 40px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .3s,box-shadow .3s}
+.card:hover{border-color:var(--accent);box-shadow:0 4px 20px rgba(74,127,212,.1)}
+.card-img-wrap{aspect-ratio:460/215;background:var(--bg);overflow:hidden;position:relative}
+.card-img-wrap img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
+.card:hover .card-img-wrap img{transform:scale(1.05)}
+.card-img-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.8rem}
+.card-body{padding:16px}
+.card-name{font-size:1rem;color:var(--text-bright);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-name:hover{color:var(--accent)}
+.card-files{font-size:0.75rem;color:var(--text-muted);margin-bottom:12px}
+.card-btns{display:flex;gap:8px}
+.btn-dl{flex:1;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:0.875rem;font-weight:600;transition:background .2s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-dl:hover{background:var(--accent-hover)}
+.btn-dl:disabled{opacity:.5;cursor:not-allowed}
+.btn-intro{padding:10px 16px;background:#1a1a2e;color:var(--text);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:0.875rem;transition:all .2s;font-family:inherit;display:flex;align-items:center;gap:6px}
+.btn-intro:hover{background:#2a2a3e}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:560px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.4)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border)}
+.modal-header h2{font-size:1.1rem;color:var(--text-bright)}
+.modal-close{width:32px;height:32px;border-radius:8px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.modal-close:hover{background:#1a1a2e;color:var(--text)}
+.modal-body{padding:20px;overflow-y:auto;flex:1}
+.modal-footer{padding:16px 20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px}
+
+/* Intro text */
+.intro-text{white-space:pre-wrap;line-height:1.7;font-size:0.875rem;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px}
+.intro-red{color:var(--red)}
+.intro-blue{color:var(--blue)}
+.intro-green{color:var(--green)}
+.intro-yellow{color:var(--yellow)}
+.intro-purple{color:var(--purple)}
+.intro-gray{color:var(--gray)}
+.appid-info{padding:12px 20px 0;font-size:0.75rem;color:var(--text-muted)}
+.appid-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;background:var(--success);color:#fff;border-radius:8px;font-size:0.8rem;font-weight:600;border:none;cursor:pointer;text-decoration:none;font-family:inherit}
+.appid-btn:hover{opacity:.85;text-decoration:none}
+
+/* Download file list */
+.file-list{display:flex;flex-direction:column;gap:10px}
+.file-item{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;transition:border-color .2s}
+.file-item:hover{border-color:var(--accent)}
+.file-name{font-size:0.875rem;color:var(--text-bright);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:12px}
+.file-size{font-size:0.75rem;color:var(--text-muted);margin-right:12px;white-space:nowrap}
+.file-dl{padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:0.8rem;font-weight:600;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-family:inherit}
+.file-dl:hover{background:var(--accent-hover);text-decoration:none}
+.btn-dl-all{padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:0.8rem;font-weight:600;font-family:inherit}
+.btn-dl-all:hover{background:var(--accent-hover)}
+
+/* Toast */
+.toast{position:fixed;top:16px;right:16px;padding:10px 18px;border-radius:8px;font-size:0.875rem;color:#fff;z-index:200;opacity:0;transform:translateY(-10px);transition:all .3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:var(--success)}
+.toast.error{background:var(--danger)}
+
+/* Responsive */
+@media(max-width:768px){
+  .grid{grid-template-columns:1fr}
+  .toolbar{flex-direction:column;align-items:stretch}
+  .search{max-width:none}
+  .tabs{gap:4px}
+  .tab{padding:6px 14px;font-size:0.8rem}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>hhuijk</h1>
+  <p>解锁库</p>
+  <div class="source-info" id="sourceInfo"></div>
+</header>
+
+<div class="tabs" id="tabs">
+  <button class="tab active" data-cat="CG解锁">CG解锁 <span class="count" id="count-CG解锁">0</span></button>
+  <button class="tab" data-cat="存档">存档 <span class="count" id="count-存档">0</span></button>
+  <button class="tab" data-cat="补丁">补丁 <span class="count" id="count-补丁">0</span></button>
+</div>
+
+<div class="toolbar">
+  <div class="search">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="search" id="search" placeholder="搜索资源名 / 文件名">
+  </div>
+  <div class="toolbar-right">
+    <button class="refresh-btn" id="refresh">
+      <svg id="refreshIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      刷新
+    </button>
+  </div>
+</div>
+
+<div id="status" class="status" style="display:none"></div>
+<div id="grid" class="grid"></div>
+
+<!-- Intro Modal -->
+<div class="modal-overlay" id="introOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="introTitle"></h2>
+      <button class="modal-close" id="introClose">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="intro-text" id="introText"></div>
+    </div>
+    <div class="appid-info" id="appidInfo" style="display:none"></div>
+    <div class="modal-footer">
+      <div id="introLeft"></div>
+      <button class="btn-dl" style="flex:none;padding:8px 24px;background:#3b82f6" id="introOk">知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- Download Modal -->
+<div class="modal-overlay" id="dlOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="dlTitle"></h2>
+      <button class="modal-close" id="dlClose">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="file-list" id="fileList"></div>
+    </div>
+    <div class="modal-footer">
+      <span id="dlSummary" style="font-size:0.8rem;color:var(--text-muted)"></span>
+      <button class="btn-dl-all" id="dlAll">全部下载</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ====== Constants ======
+var TOKEN = '7d526736ccaae3c4bd482f5102b86e5f';
+var GITEE_OWNER = 'hhuijkcom';
+var GITEE_REPO = 'hhuijk-c-g-h';
+var GITEE_BRANCH = 'master';
+var GITEE_ROOTS = [
+  { category: 'CG解锁', path: 'cgjs' },
+  { category: '存档', path: '存档' },
+  { category: '补丁', path: '补丁' }
+];
+var GH_OWNER = 'hhuijk-hhuijkcom';
+var GH_REPO = 'hhuijk-C-G-h';
+var GH_ROOT = 'jiesuoc_g_h/45号电车';
+var CACHE_KEY = 'unlock_web_cache_v1';
+var CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
+
+// ====== State ======
+var allItems = { 'CG解锁': [], '存档': [], '补丁': [] };
+var activeCategory = 'CG解锁';
+var searchQuery = '';
+var isLoading = false;
+var dataSource = '';
+
+// ====== Helpers ======
+function encodePath(p) {
+  return String(p).split('/').map(function(s){return encodeURIComponent(s)}).join('/');
+}
+function getGiteeRawUrl(filePath) {
+  return 'https://gitee.com/' + GITEE_OWNER + '/' + GITEE_REPO + '/raw/' + GITEE_BRANCH + '/' + encodePath(filePath) + '?access_token=' + TOKEN;
+}
+function getGiteeApiUrl(contentPath) {
+  return 'https://gitee.com/api/v5/repos/' + GITEE_OWNER + '/' + GITEE_REPO + '/contents/' + encodePath(contentPath) + '?access_token=' + TOKEN + '&ref=' + GITEE_BRANCH;
+}
+function getJsDelivrUrl(filePath) {
+  var clean = String(filePath).replace(/^\/+/, '');
+  return 'https://cdn.jsdelivr.net/gh/' + GH_OWNER + '/' + GH_REPO + '@main/' + encodeURI(clean);
+}
+function isImageFile(name) {
+  return /\.(jpg|jpeg|png|webp|gif)$/i.test(name);
+}
+function isIntroFile(name) {
+  return String(name).toLowerCase() === 'jianjie.txt';
+}
+function getPreferredImage(imageFiles) {
+  return imageFiles.find(function(f){return /^header_schinese\.(jpg|jpeg|png|webp)$/i.test(f.name)}) ||
+    imageFiles.find(function(f){return /^header\.(jpg|jpeg|png|webp)$/i.test(f.name)}) ||
+    imageFiles.find(function(f){return /^library_header/i.test(f.name)}) ||
+    imageFiles.find(function(f){return /^library_hero/i.test(f.name)}) ||
+    imageFiles[0];
+}
+
+// Gitee 私有仓库图片需通过 API 获取 base64 内容转为 data URL
+var imageUrlCache = {};
+function fetchImageAsDataUrl(imagePath, isGitee) {
+  if (imageUrlCache[imagePath]) return Promise.resolve(imageUrlCache[imagePath]);
+
+  if (!isGitee) {
+    // jsDelivr: 直接使用 CDN URL
+    return Promise.resolve(getJsDelivrUrl(imagePath));
+  }
+
+  // Gitee: 通过 API 获取 base64 内容
+  var apiUrl = getGiteeApiUrl(imagePath);
+  return fetchJson(apiUrl).then(function(json) {
+    if (json && json.content && json.encoding === 'base64') {
+      var ext = String(imagePath).split('.').pop().toLowerCase();
+      var mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : ext === 'gif' ? 'image/gif' : 'image/jpeg';
+      var dataUrl = 'data:' + mime + ';base64,' + String(json.content).replace(/\s/g, '');
+      imageUrlCache[imagePath] = dataUrl;
+      return dataUrl;
+    }
+    // 回退：尝试 download_url
+    if (json && json.download_url) {
+      var url = json.download_url + (json.download_url.includes('?') ? '&' : '?') + 'access_token=' + TOKEN;
+      imageUrlCache[imagePath] = url;
+      return url;
+    }
+    return '';
+  }).catch(function(e) {
+    console.warn('图片加载失败 ' + imagePath + ':', e.message);
+    return '';
+  });
+}
+
+// 懒加载可见卡片图片
+var imageObserver = null;
+function lazyLoadImages() {
+  if (imageObserver) imageObserver.disconnect();
+  imageObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        var img = entry.target;
+        var path = img.dataset.imagePath;
+        var isGitee = img.dataset.isGitee === '1';
+        imageObserver.unobserve(img);
+        fetchImageAsDataUrl(path, isGitee).then(function(url) {
+          if (url) {
+            img.src = url;
+          } else {
+            var wrap = img.parentNode;
+            wrap.innerHTML = '<div class="card-img-placeholder">暂无图片</div>';
+          }
+        });
+      }
+    });
+  }, { rootMargin: '100px' });
+
+  document.querySelectorAll('.card-img-wrap img[data-image-path]').forEach(function(img) {
+    imageObserver.observe(img);
+  });
+}
+function inferCategory(name, files) {
+  var allText = [name].concat(files.map(function(f){return f.name||''})).join(' ').toLowerCase();
+  if (allText.includes('存档') || allText.includes('save')) return '存档';
+  if (allText.includes('补丁') || allText.includes('patch')) return '补丁';
+  return 'CG解锁';
+}
+function formatSize(bytes) {
+  if (!bytes || bytes === 0) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
+}
+function escapeHtml(text) {
+  var div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+function groupByCategory(items) {
+  var grouped = { 'CG解锁': [], '存档': [], '补丁': [] };
+  items.forEach(function(item) {
+    var cat = item.category || 'CG解锁';
+    if (!grouped[cat]) cat = 'CG解锁';
+    grouped[cat].push(item);
+  });
+  return grouped;
+}
+
+// ====== Fetch with CORS fallback ======
+function fetchJson(url) {
+  return fetch(url).then(function(res) {
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  }).catch(function(e) {
+    return fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url)).then(function(res) {
+      if (!res.ok) throw new Error('Proxy HTTP ' + res.status);
+      return res.json();
+    });
+  });
+}
+function fetchText(url) {
+  return fetch(url).then(function(res) {
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.text();
+  }).catch(function(e) {
+    return fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url)).then(function(res) {
+      if (!res.ok) throw new Error('Proxy HTTP ' + res.status);
+      return res.text();
+    });
+  });
+}
+
+// ====== Data Loading ======
+function loadFromGitee() {
+  var progress = { total: 0, done: 0 };
+
+  // Step 1: Fetch root directories in parallel
+  return Promise.all(GITEE_ROOTS.map(function(root) {
+    return fetchJson(getGiteeApiUrl(root.path)).then(function(dirs) {
+      if (!Array.isArray(dirs)) return { root: root, subDirs: [] };
+      var subDirs = dirs.filter(function(d){return d.type === 'dir'})
+        .sort(function(a,b){return a.name.localeCompare(b.name, 'zh-CN')});
+      return { root: root, subDirs: subDirs };
+    }).catch(function(e) {
+      console.warn('Gitee root ' + root.path + ' failed:', e.message);
+      return { root: root, subDirs: [] };
+    });
+  })).then(function(results) {
+    // Step 2: Collect all subdirectories
+    var allSubDirs = [];
+    results.forEach(function(r) {
+      r.subDirs.forEach(function(dir) {
+        allSubDirs.push({ dir: dir, category: r.root.category });
+      });
+    });
+    progress.total = allSubDirs.length;
+    updateProgress(progress.done, progress.total);
+
+    // Step 3: Fetch subdirectory contents in batches of 5
+    var items = [];
+    var batchSize = 5;
+
+    function processBatch(startIdx) {
+      if (startIdx >= allSubDirs.length) return items;
+
+      var batch = allSubDirs.slice(startIdx, startIdx + batchSize);
+      return Promise.all(batch.map(function(entry) {
+        return fetchJson(getGiteeApiUrl(entry.dir.path)).then(function(files) {
+          if (!Array.isArray(files)) return null;
+
+          var fileItems = files.filter(function(f){return f.type === 'file'});
+          var imageFiles = fileItems.filter(function(f){return isImageFile(f.name)});
+          var introFile = fileItems.find(function(f){return isIntroFile(f.name)});
+          var dlFiles = fileItems
+            .filter(function(f){return !isImageFile(f.name) && !isIntroFile(f.name)})
+            .map(function(f){
+              return { name: f.name, size: f.size || 0, downloadUrl: getGiteeRawUrl(f.path) };
+            });
+
+          var preferredImage = getPreferredImage(imageFiles);
+
+          return {
+            name: entry.dir.name,
+            path: entry.dir.path,
+            category: entry.category,
+            imagePath: preferredImage ? preferredImage.path : '',
+            imageUrl: '',
+            isGitee: true,
+            introPath: introFile ? introFile.path : '',
+            introText: '',
+            files: dlFiles
+          };
+        }).catch(function(e) {
+          console.warn('Gitee subdir ' + entry.dir.path + ' failed:', e.message);
+          return null;
+        });
+      })).then(function(batchResults) {
+        batchResults.forEach(function(item) {
+          if (item) items.push(item);
+        });
+        progress.done += batch.length;
+        updateProgress(progress.done, progress.total);
+        return processBatch(startIdx + batchSize);
+      });
+    }
+
+    return processBatch(0);
+  });
+}
+
+function loadFromJsDelivr() {
+  return fetchJson('https://data.jsdelivr.com/v1/package/gh/' + GH_OWNER + '/' + GH_REPO + '@main/flat')
+    .then(function(json) {
+      var files = Array.isArray(json.files) ? json.files : [];
+      var rootPrefix = '/' + GH_ROOT + '/';
+      var groupMap = new Map();
+
+      files.forEach(function(file) {
+        var fullPath = String(file.name || '');
+        if (!fullPath.startsWith(rootPrefix)) return;
+        var relPath = fullPath.slice(rootPrefix.length);
+        var slashIdx = relPath.indexOf('/');
+        if (slashIdx <= 0) return;
+        var resName = relPath.slice(0, slashIdx);
+        var fileName = relPath.slice(slashIdx + 1);
+        if (!fileName || fileName.includes('/')) return;
+
+        if (!groupMap.has(resName)) {
+          groupMap.set(resName, { filesRaw: [] });
+        }
+        groupMap.get(resName).filesRaw.push({ name: fileName, size: file.size || 0, fullPath: fullPath });
+      });
+
+      var items = [];
+      groupMap.forEach(function(group, name) {
+        var imageFiles = group.filesRaw.filter(function(f){return isImageFile(f.name)});
+        var introFile = group.filesRaw.find(function(f){return isIntroFile(f.name)});
+        var dlFiles = group.filesRaw
+          .filter(function(f){return !isImageFile(f.name) && !isIntroFile(f.name)})
+          .map(function(f){
+            return { name: f.name, size: f.size || 0, downloadUrl: getJsDelivrUrl(f.fullPath) };
+          });
+
+        var preferredImage = getPreferredImage(imageFiles);
+
+        items.push({
+          name: name,
+          path: GH_ROOT + '/' + name,
+          category: inferCategory(name, dlFiles),
+          imagePath: preferredImage ? preferredImage.fullPath : '',
+          imageUrl: '',
+          isGitee: false,
+          introPath: introFile ? introFile.fullPath : '',
+          introText: '',
+          files: dlFiles
+        });
+      });
+
+      items.sort(function(a,b){return a.name.localeCompare(b.name, 'zh-CN')});
+      return items;
+    });
+}
+
+// ====== Cache ======
+function readCache() {
+  try {
+    var raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    var cache = JSON.parse(raw);
+    if (!cache || !cache.items) return null;
+    var age = Date.now() - new Date(cache.updatedAt || 0).getTime();
+    if (age > CACHE_MAX_AGE) return null;
+    return cache;
+  } catch(_) { return null; }
+}
+function writeCache(items, source) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      updatedAt: new Date().toISOString(),
+      source: source,
+      items: items
+    }));
+  } catch(e) { console.warn('Cache write failed:', e.message); }
+}
+
+// ====== Loading Orchestration ======
+function loadAll(forceRefresh) {
+  if (isLoading) return;
+  isLoading = true;
+
+  // Check cache first
+  if (!forceRefresh) {
+    var cache = readCache();
+    if (cache) {
+      allItems = groupByCategory(cache.items);
+      dataSource = (cache.source || 'cache') + '（缓存）';
+      renderAll();
+      isLoading = false;
+      return;
+    }
+  }
+
+  // Show loading
+  showStatus('正在从 Gitee 加载解锁资源...', true);
+  document.getElementById('refreshIcon').classList.add('spin');
+
+  // Try Gitee first
+  loadFromGitee().then(function(items) {
+    if (items.length === 0) throw new Error('Gitee 返回空数据');
+    allItems = groupByCategory(items);
+    dataSource = 'Gitee';
+    writeCache(items, 'gitee');
+    renderAll();
+    hideStatus();
+  }).catch(function(giteeError) {
+    console.warn('Gitee failed, trying jsDelivr:', giteeError.message);
+    showStatus('Gitee 加载失败，正在从 jsDelivr 加载...', true);
+
+    // Fallback to jsDelivr
+    loadFromJsDelivr().then(function(items) {
+      if (items.length === 0) throw new Error('jsDelivr 返回空数据');
+      allItems = groupByCategory(items);
+      dataSource = 'jsDelivr';
+      writeCache(items, 'jsdelivr');
+      renderAll();
+      hideStatus();
+    }).catch(function(jsDelivrError) {
+      console.error('All sources failed:', jsDelivrError);
+
+      // Try stale cache
+      try {
+        var raw = localStorage.getItem(CACHE_KEY);
+        if (raw) {
+          var stale = JSON.parse(raw);
+          if (stale && stale.items) {
+            allItems = groupByCategory(stale.items);
+            dataSource = (stale.source || 'cache') + '（过期缓存）';
+            renderAll();
+            hideStatus();
+            showToast('数据源不可用，已使用过期缓存', 'error');
+            return;
+          }
+        }
+      } catch(_){ }
+
+      showStatusError('加载失败：' + (jsDelivrError.message || '未知错误') + '<br>Gitee: ' + giteeError.message);
+    });
+  }).finally(function() {
+    isLoading = false;
+    document.getElementById('refreshIcon').classList.remove('spin');
+  });
+}
+
+// ====== Progress ======
+function updateProgress(done, total) {
+  if (total === 0) return;
+  var pct = Math.round((done / total) * 100);
+  showStatus('正在加载解锁资源... (' + done + '/' + total + ')', true);
+  var bar = document.getElementById('progressBar');
+  if (bar) bar.style.width = pct + '%';
+}
+
+// ====== Status ======
+function showStatus(msg, showProgress) {
+  var el = document.getElementById('status');
+  el.style.display = 'block';
+  el.className = 'status';
+  var html = msg;
+  if (showProgress) {
+    html += '<div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:0%"></div></div>';
+  }
+  el.innerHTML = html;
+}
+function showStatusError(msg) {
+  var el = document.getElementById('status');
+  el.style.display = 'block';
+  el.className = 'status error';
+  el.innerHTML = msg;
+}
+function hideStatus() {
+  document.getElementById('status').style.display = 'none';
+}
+
+// ====== Render ======
+function renderAll() {
+  // Update counts
+  ['CG解锁','存档','补丁'].forEach(function(cat) {
+    var el = document.getElementById('count-' + cat);
+    if (el) el.textContent = (allItems[cat] || []).length;
+  });
+
+  // Update source info
+  var si = document.getElementById('sourceInfo');
+  if (dataSource) si.textContent = '数据来源：' + dataSource + ' · ' + new Date().toLocaleString('zh-CN');
+
+  renderGrid();
+}
+
+function renderGrid() {
+  var grid = document.getElementById('grid');
+  var items = allItems[activeCategory] || [];
+
+  // Filter by search
+  if (searchQuery) {
+    var q = searchQuery.toLowerCase();
+    items = items.filter(function(item) {
+      if (item.name.toLowerCase().includes(q)) return true;
+      if (item.introText && item.introText.toLowerCase().includes(q)) return true;
+      return item.files.some(function(f){return f.name.toLowerCase().includes(q)});
+    });
+  }
+
+  if (items.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">' +
+      (searchQuery ? '未找到匹配的资源' : '暂无资源') + '</div>';
+    return;
+  }
+
+  var html = items.map(function(item) {
+    var imgHtml;
+    if (item.imageUrl) {
+      imgHtml = '<img src="' + item.imageUrl + '" alt="' + escapeHtml(item.name) + '" loading="lazy" onerror="this.parentNode.innerHTML=\'<div class=card-img-placeholder>暂无图片</div>\'">';
+    } else if (item.imagePath) {
+      imgHtml = '<img data-image-path="' + escapeAttr(item.imagePath) + '" data-is-gitee="' + (item.isGitee ? '1' : '0') + '" alt="' + escapeHtml(item.name) + '" src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'340\' height=\'159\'%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'%230a0a14\'/%3E%3C/svg%3E">';
+    } else {
+      imgHtml = '<div class="card-img-placeholder">暂无图片</div>';
+    }
+
+    var fileCount = item.files.length;
+    var fileLabel = fileCount > 0 ? fileCount + ' 个可下载文件' : '暂无下载文件';
+
+    return '<div class="card">' +
+      '<div class="card-img-wrap">' + imgHtml + '</div>' +
+      '<div class="card-body">' +
+        '<h3 class="card-name" title="' + escapeHtml(item.name) + '">' + escapeHtml(item.name) + '</h3>' +
+        '<p class="card-files">' + fileLabel + '</p>' +
+        '<div class="card-btns">' +
+          '<button class="btn-dl" ' + (fileCount === 0 ? 'disabled' : '') + ' onclick="openDownloadModal(\'' + escapeAttr(item.path) + '\')">' +
+            '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+            '下载资源' +
+          '</button>' +
+          '<button class="btn-intro" onclick="openIntroModal(\'' + escapeAttr(item.path) + '\')">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>' +
+            '简介' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  grid.innerHTML = html;
+  lazyLoadImages();
+}
+
+function escapeAttr(s) {
+  return String(s).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+function findItemByPath(itemPath) {
+  for (var cat in allItems) {
+    var found = (allItems[cat] || []).find(function(item){return item.path === itemPath});
+    if (found) return found;
+  }
+  return null;
+}
+
+// ====== Intro Modal ======
+function openIntroModal(itemPath) {
+  var item = findItemByPath(itemPath);
+  if (!item) return;
+
+  document.getElementById('introTitle').textContent = item.name;
+  document.getElementById('introText').innerHTML = '<span style="color:var(--text-muted)">加载中...</span>';
+  document.getElementById('appidInfo').style.display = 'none';
+  document.getElementById('introLeft').innerHTML = '';
+  document.getElementById('introOverlay').classList.add('show');
+
+  // Fetch intro text
+  var introUrl = item.introPath
+    ? (dataSource && dataSource.startsWith('Gitee') ? getGiteeRawUrl(item.introPath) : getJsDelivrUrl(item.introPath))
+    : '';
+
+  if (!introUrl) {
+    document.getElementById('introText').textContent = '暂无简介，可在该资源文件夹中添加 jianjie.txt';
+    return;
+  }
+
+  fetchText(introUrl).then(function(text) {
+    item.introText = text.trim();
+    renderIntroContent(item);
+  }).catch(function(e) {
+    // Try alternative source
+    var altUrl = item.introPath ? getGiteeRawUrl(item.introPath) : '';
+    if (altUrl && altUrl !== introUrl) {
+      fetchText(altUrl).then(function(text) {
+        item.introText = text.trim();
+        renderIntroContent(item);
+      }).catch(function() {
+        document.getElementById('introText').textContent = '简介加载失败';
+      });
+    } else {
+      document.getElementById('introText').textContent = '简介加载失败：' + e.message;
+    }
+  });
+}
+
+function renderIntroContent(item) {
+  // Render colored text
+  var html = '';
+  var text = item.introText || '';
+  var pattern = /\[(red|blue|green|yellow|purple|gray)\]([\s\S]*?)\[\/\1\]/gi;
+  var lastIndex = 0;
+  var match;
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      html += escapeHtml(text.slice(lastIndex, match.index));
+    }
+    html += '<span class="intro-' + match[1].toLowerCase() + '">' + escapeHtml(match[2]) + '</span>';
+    lastIndex = pattern.lastIndex;
+  }
+  if (lastIndex < text.length) {
+    html += escapeHtml(text.slice(lastIndex));
+  }
+  if (!html) html = '暂无简介，可在该资源文件夹中添加 jianjie.txt';
+  document.getElementById('introText').innerHTML = html;
+
+  // Detect AppIDs
+  var appIds = extractAppIds(item.introText);
+  var appidInfo = document.getElementById('appidInfo');
+  var introLeft = document.getElementById('introLeft');
+  if (appIds.length > 0) {
+    appidInfo.style.display = 'block';
+    appidInfo.textContent = '已识别 AppID：' + appIds.join('、');
+    var primaryId = appIds[0];
+    introLeft.innerHTML = '<a class="appid-btn" href="https://store.steampowered.com/app/' + primaryId + '" target="_blank">' +
+      '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>' +
+      '入库 ' + primaryId + '</a>';
+  } else {
+    appidInfo.style.display = 'none';
+    introLeft.innerHTML = '';
+  }
+}
+
+function extractAppIds(text) {
+  if (!text) return [];
+  var ids = new Set();
+  var patterns = [
+    /store\.steampowered\.com\/app\/(\d{3,10})/gi,
+    /steam:\/\/(?:run|store)\/(\d{3,10})/gi,
+    /(?:AppID|APPID|app_id|appid|游戏ID|游戏id|入库ID|入库id)\s*[:：=]?\s*(\d{3,10})/gi
+  ];
+  patterns.forEach(function(p) {
+    var m;
+    while ((m = p.exec(text)) !== null) ids.add(m[1]);
+  });
+  if (ids.size === 0) {
+    var sp = /(^|[^\d])(\d{6,10})(?=[^\d]|$)/g;
+    var m;
+    while ((m = sp.exec(text)) !== null) ids.add(m[2]);
+  }
+  return Array.from(ids);
+}
+
+// ====== Download Modal ======
+var currentDlItem = null;
+
+function openDownloadModal(itemPath) {
+  var item = findItemByPath(itemPath);
+  if (!item || item.files.length === 0) {
+    showToast('该资源没有可下载文件', 'error');
+    return;
+  }
+  currentDlItem = item;
+  document.getElementById('dlTitle').textContent = item.name;
+  document.getElementById('dlSummary').textContent = '共 ' + item.files.length + ' 个文件';
+
+  var html = item.files.map(function(f, i) {
+    return '<div class="file-item">' +
+      '<span class="file-name" title="' + escapeHtml(f.name) + '">' + escapeHtml(f.name) + '</span>' +
+      '<span class="file-size">' + formatSize(f.size) + '</span>' +
+      '<a class="file-dl" href="' + f.downloadUrl + '" download="' + escapeAttr(f.name) + '" target="_blank">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+        '下载' +
+      '</a>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('fileList').innerHTML = html;
+  document.getElementById('dlOverlay').classList.add('show');
+}
+
+function downloadAllFiles() {
+  if (!currentDlItem || currentDlItem.files.length === 0) return;
+  showToast('开始下载 ' + currentDlItem.files.length + ' 个文件...', 'success');
+
+  currentDlItem.files.forEach(function(f, i) {
+    setTimeout(function() {
+      var a = document.createElement('a');
+      a.href = f.downloadUrl;
+      a.download = f.name;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }, i * 1200);
+  });
+}
+
+// ====== Toast ======
+var toastTimer = null;
+function showToast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + (type || 'success');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { el.className = 'toast'; }, 3000);
+}
+
+// ====== Event Handlers ======
+document.getElementById('tabs').addEventListener('click', function(e) {
+  var tab = e.target.closest('.tab');
+  if (!tab) return;
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+  tab.classList.add('active');
+  activeCategory = tab.dataset.cat;
+  renderGrid();
+});
+
+document.getElementById('search').addEventListener('input', function(e) {
+  searchQuery = e.target.value.trim();
+  renderGrid();
+});
+
+document.getElementById('refresh').addEventListener('click', function() {
+  loadAll(true);
+});
+
+document.getElementById('introClose').addEventListener('click', function() {
+  document.getElementById('introOverlay').classList.remove('show');
+});
+document.getElementById('introOk').addEventListener('click', function() {
+  document.getElementById('introOverlay').classList.remove('show');
+});
+
+document.getElementById('dlClose').addEventListener('click', function() {
+  document.getElementById('dlOverlay').classList.remove('show');
+});
+document.getElementById('dlAll').addEventListener('click', downloadAllFiles);
+
+// Close modal on overlay click
+document.getElementById('introOverlay').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('show');
+});
+document.getElementById('dlOverlay').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('show');
+});
+
+// Close on Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.getElementById('introOverlay').classList.remove('show');
+    document.getElementById('dlOverlay').classList.remove('show');
+  }
+});
+
+// ====== Init ======
+loadAll(false);
+</script>
+</body>
+</html>
