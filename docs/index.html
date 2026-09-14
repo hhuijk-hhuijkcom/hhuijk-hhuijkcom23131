@@ -264,54 +264,70 @@
     </div>
   </section>
 
-  <!-- ================= 页脚 ================= -->
-  <footer class="footer">
+ <!-- 页脚 footer 开始 -->
+<footer class="footer">
     <div class="container footer-inner">
-      <div class="footer-brand">
-        <span class="brand-mark">h</span>
-        <span class="brand-text">hhuijk </span>
-      </div>
-      <div class="footer-links">
-        <a href="https://www.taishf.online" target="_blank" rel="noopener">合作人[taishf]</a>
-        <a href="#changelog">更新日志</a>
-        <a href="#faq">常见问题</a>
-      </div>
-      <p class="footer-copy">© 2026 hhuijk · 与 Valve Corporation 无关，Steam 是 Valve 公司的商标。</p>
+        <div class="footer-brand">
+            <span class="brand-mark">h</span>
+            <span class="brand-text">hhuijk </span>
+        </div>
+        <div class="footer-links">
+            <a href="https://www.taishf.online" target="_blank" rel="noopener">合作人[taishf]</a>
+            <a href="#changelog">更新日志</a>
+            <a href="#faq">常见问题</a>
+        </div>
+        <p class="footer-copy">© 2026 hhuijk · 与 Valve Corporation 无关，Steam 是 Valve 公司的商标。</p>
     </div>
-  </footer
+</footer>
+
+<!-- 防开发者工具JS（优化修复版） -->
 <script>
 // 禁用右键菜单
-document.oncontextmenu = e => e.preventDefault();
-
-// 监听键盘快捷键
-document.addEventListener('keydown', (e) => {
-  // F12
-  if (e.key === 'F12') e.preventDefault();
-  // Ctrl+Shift+I / Ctrl+Shift+J
-  if (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) e.preventDefault();
-  // Ctrl+U
-  if (e.ctrlKey && e.key.toLowerCase() === 'u') e.preventDefault();
-})
-
-// 检测devtools（补充debugger陷阱）
-function checkDevTools() {
-  const threshold = 160;
-  const wDiff = window.outerWidth - window.innerWidth > threshold;
-  const hDiff = window.outerHeight - window.innerHeight > threshold;
-  if(wDiff || hDiff){
-    document.body.innerHTML = "<h1 style='color:red;text-align:center;margin-top:100px'>禁止打开开发者工具！</h1>";
-  }
+document.oncontextmenu = function(){
+    return false;
 }
-setInterval(checkDevTools,1000);
 
-// debugger 检测（经典防调试手段）
-!function(){const _debug = new Date;debugger;if(new Date - _debug > 100){document.body.innerHTML = "<h1 style='color:red;text-align:center;margin-top:100px'>禁止打开开发者工具！</h1>";}}();
-setInterval(()=>{!function(){const _debug = new Date;debugger;if(new Date - _debug > 100){document.body.innerHTML = "<h1 style='color:red;text-align:center;margin-top:100px'>禁止打开开发者工具！</h1>";}}();},2000);
+// 快捷键拦截
+document.addEventListener('keydown', function(e) {
+    // F12
+    if (e.key === 'F12') {
+        e.preventDefault();
+        return false;
+    }
+    
+    if (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) {
+        e.preventDefault();
+        return false;
+    }
+    
+    if (e.ctrlKey && e.key.toLowerCase() === 'u') {
+        e.preventDefault();
+        return false;
+    }
+});
+
+
+function checkDevTools() {
+    const threshold = 160;
+    const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+    const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+    if(widthThreshold || heightThreshold){
+        document.body.innerHTML = "<h1 style='color:red;text-align:center;margin-top:100px'>禁止打开开发者工具！</h1>";
+    }
+}
+setInterval(checkDevTools, 1000);
+
+
+setInterval(function(){
+    const startTime = new Date();
+    debugger;
+    if(new Date() - startTime > 100){
+        document.body.innerHTML = "<h1 style='color:red;text-align:center;margin-top:100px'>禁止打开开发者工具！</h1>";
+    }
+},2000);
 </script>
 
-
-
-  <script src="assets/js/config.js"></script>
-  <script src="assets/js/main.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/main.js"></script>
 </body>
 </html>
