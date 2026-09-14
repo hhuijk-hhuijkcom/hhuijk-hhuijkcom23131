@@ -4,17 +4,17 @@
 
   var cfg = window.SITE_CONFIG || {};
   var repo = cfg.SITE_REPO || "hhuijk-hhuijkcom/hhuijk-cx";
-  var source = cfg.RELEASE_SOURCE || "github";
+  var source = cfg.RELEASE_SOURCE || "local";
 
   var els = {};
   var latest = null;
   var assets = [];
 
+  function $(id) { return document.getElementById(kebab(id)); }
+
   function kebab(str) {
     return str.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
   }
-
-  function $(id) { return document.getElementById(kebab(id)); }
 
   function esc(text) {
     var div = document.createElement("div");
@@ -29,15 +29,67 @@
     return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   }
 
-  function githubLatest() {
-    var url = "https://api.github.com/repos/" + repo + "/releases/latest";
-    return fetch(url, { headers: { Accept: "application/vnd.github+json" } })
+  function apiGet(url) {
+    return fetch(url, { method: "GET", headers: { Accept: "application/json" } })
       .then(function (res) {
         if (!res.ok) throw new Error("HTTP " + res.status);
         return res.json();
       });
   }
 
+  /* ---------- 数据源：GitCode ---------- */
+  function gitcodeLatest() {
+    var gc = cfg.GITCODE_REPO || repo;
+    var token = cfg.GITCODE_TOKEN || "";
+    var base = "https://api.gitcode.com/api/v5/repos/" + gc + "/releases";
+    return apiGet(base + "/latest?access_token=" + encodeURIComponent(token))
+      .then(function (rel) {
+        var tag = rel.tag_name;
+        return apiGet(base + "/" + encodeURIComponent(tag) + "?access_token=" + encodeURIComponent(token) + "&temp_download_url=true")
+          .then(function (detail) {
+            return {
+              tag: detail.tag_name,
+              name: detail.name || detail.tag_name,
+              date: detail.created_at,
+              body: detail.body,
+              assets: (detail.assets || []).map(function (a) {
+                return {
+                  name: a.name,
+                  type: a.type,
+                  browser_download_url: a.temp_download_url || a.browser_download_url
+                };
+              }).sort(function (x, y) {
+                var px = x.type === "attach" ? 0 : 1;
+                var py = y.type === "attach" ? 0 : 1;
+                return px - py;
+              })
+            };
+          });
+      });
+  }
+
+  /* ---------- 数据源：GitHub ---------- */
+  function githubLatest() {
+    var url = "https://api.github.com/repos/" + repo + "/releases/latest";
+    return fetch(url, { headers: { Accept: "application/vnd.github+json" } })
+      .then(function (res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        return {
+          tag: data.tag_name,
+          name: data.name || data.tag_name,
+          date: data.published_at,
+          body: data.body,
+          assets: (data.assets || []).map(function (a) {
+            return { name: a.name, browser_download_url: a.browser_download_url };
+          })
+        };
+      });
+  }
+
+  /* ---------- 本地兜底 ---------- */
   function useLocal() {
     latest = cfg.LOCAL_RELEASE || { tag: "v0.6.3", name: "v0.6.3", date: "", body: "" };
     assets = cfg.LOCAL_ASSETS || [];
@@ -62,6 +114,7 @@
     setText("sideVersion", tag);
     setText("noticeVersion", tag);
     setText("termVersion", tag);
+    setText("statVersion", tag);
     setText("latestDate", latest.date ? "发布于 " + fmtDate(latest.date) : "版本信息加载失败，请前往 Releases 查看");
 
     if (assets.length > 0) {
@@ -131,13 +184,13 @@
   function init() {
     ["latestVersion", "latestDate", "downloadNote", "mainDownloadBtn",
      "mainDownloadName", "assetList", "headerVersion", "sideVersion",
-     "noticeVersion", "termVersion", "releaseList", "releaseNotesBody",
-     "allReleasesLink"].forEach(function (id) {
+     "noticeVersion", "termVersion", "statVersion", "releaseList",
+     "releaseNotesBody", "allReleasesLink"].forEach(function (id) {
       els[id] = $(id);
     });
 
     if (els.allReleasesLink) {
-      els.allReleasesLink.href = "https://github.com/" + repo + "/releases";
+      els.allReleasesLink.href = "https://gitcode.com/" + repo + "/releases";
     }
 
     var done = function () {
@@ -146,19 +199,19 @@
       renderList();
     };
 
-    if (source === "github") {
-      githubLatest()
-        .then(function (data) {
-          latest = { tag: data.tag_name, name: data.name || data.tag_name, date: data.published_at, body: data.body };
-          assets = (data.assets || []).map(function (a) {
-            return { name: a.name, browser_download_url: a.browser_download_url };
-          });
-          done();
-        })
-        .catch(function () {
-          useLocal();
-          done();
-        });
+    var remap = function (d) {
+      latest = { tag: d.tag, name: d.name, date: d.date, body: d.body };
+      assets = d.assets || [];
+    };
+
+    var fetcher =
+      source === "gitcode" ? gitcodeLatest :
+      source === "github" ? githubLatest : null;
+
+    if (fetcher) {
+      fetcher()
+        .then(function (d) { remap(d); done(); })
+        .catch(function () { useLocal(); done(); });
     } else {
       useLocal();
       done();
