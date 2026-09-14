@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>hhuijk SYSTEM · Steam 入库助手</title>
+  <meta name="description" content="hhuijk Steam 入库助手，一键将任意游戏加入 Steam 库，支持 Steam 链接 / AppID 入库，完全免费。">
+  <meta property="og:title" content="hhuijk SYSTEM · Steam 入库助手">
+  <meta property="og:description" content="一键将任意游戏加入 Steam 库，支持 Steam 链接 / AppID 入库，完全免费。">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230d0d1a'/><circle cx='50' cy='50' r='30' fill='none' stroke='%2300c4ff' stroke-width='8'/><text x='50' y='64' font-size='30' text-anchor='middle' fill='%2300c4ff' font-family='Arial' font-weight='bold'>h</text></svg>">
+</head>
+<body>
+
+  <!-- ================= 顶部栏 ================= -->
+  <header class="topbar">
+    <div class="tb-left">
+      <span class="tb-logo">H</span>
+      <span class="tb-title">hhuijk</span>
+      <span class="tb-badge">SYSTEM</span>
+    </div>
+    <div class="tb-right">
+      <span class="tb-status"><i class="dot"></i> ONLINE</span>
+      <span class="tb-ver" id="header-version">v0.6.3</span>
+      <span class="win-btn">&#9472;</span>
+      <span class="win-btn close">&#10005;</span>
+    </div>
+  </header>
+
+  <!-- ================= 布局 ================= -->
+  <div class="layout">
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+      <nav class="side-nav">
+        <a href="#download" title="下载" class="side-item active">&#8681;</a>
+        <a href="#features" title="功能特性" class="side-item">&#9881;</a>
+        <a href="#usage" title="使用方法" class="side-item">&#9776;</a>
+        <a href="#changelog" title="更新日志" class="side-item">&#128241;</a>
+        <a href="#faq" title="常见问题" class="side-item">&#63;</a>
+      </nav>
+      <div class="side-ver" id="side-version">v0.6.3</div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main">
+
+      <!-- 标题区 -->
+      <section class="page-head">
+        <div>
+          <h1>hhuijk Steam 入库助手</h1>
+          <p class="head-sub">把任意游戏 / 程序一键加入 Steam 库 · 免费 · 开源</p>
+        </div>
+        <div class="head-right">
+          <span class="status-pill"><i class="dot"></i> ONLINE</span>
+          <a class="link-btn" id="store-link" href="https://store.steampowered.com" target="_blank" rel="noopener">Steam商店 &#8599;</a>
+        </div>
+      </section>
+
+      <!-- 通知栏（可编辑文案） -->
+      <div class="notice">
+        [hhuijk]：本站为 hhuijk Steam 入库助手官方站点，所有功能完全免费，付费的皆为骗局。
+        最新版本 <span id="notice-version">v0.6.3</span> 可在下方直接下载。有建议或 Bug 欢迎反馈。
+        Steam 商店访问建议开启加速器。
+      </div>
+
+      <!-- 下载模块 -->
+      <section class="panel download-panel" id="download">
+        <div class="panel-title">
+          <span class="play-icon">&#9654;</span> 下载最新版本
+          <span class="panel-desc">TARGET &gt; Latest Release</span>
+        </div>
+
+        <div class="dl-main">
+          <label class="dl-label">最新版本 <span id="latest-version" class="ver-static">获取中…</span></label>
+          <div class="dl-row">
+            <div class="dl-input-wrap">
+              <span class="dl-prefix">&#128190;</span>
+              <input type="text" id="main-download-name" value="hhuijkSetup-0.6.3.exe" readonly>
+            </div>
+            <a class="btn-main" id="main-download-btn" href="#" rel="noopener">
+              &#8681; 开始下载
+            </a>
+          </div>
+          <p class="dl-date muted" id="latest-date">正在从仓库获取最新发行信息…</p>
+          <p class="dl-note muted" id="download-note">点击「开始下载」即可获取 Windows 安装程序。</p>
+
+          <div class="mode-group">
+            <span class="mode-label">MODE &gt; 下载方式</span>
+            <div class="mode-cards">
+              <div class="mode-card on">
+                <span class="mode-dot"></span>
+                <span class="mode-name">GitHub 生成</span>
+                <span class="tag tag-green">推荐</span>
+                <span class="mode-sub">自动获取最新发行版，无需手动维护</span>
+              </div>
+              <div class="mode-card alt">
+                <span class="mode-dot purple"></span>
+                <span class="mode-name">本地直连</span>
+                <span class="tag tag-purple">备用</span>
+                <span class="mode-sub">仓库不可用时回落本地配置版本</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="dl-assets">
+            <span class="asset-label">资源</span>
+            <div id="asset-list" class="asset-list muted">正在加载下载资源…</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 运行日志终端 -->
+      <section class="panel term-panel">
+        <div class="panel-title">
+          <span class="play-icon">&#9654;</span> 运行日志
+          <span class="panel-desc">TERMINAL_OUTPUT [real-time · UTF-8 · zh-CN]</span>
+        </div>
+        <div class="term-body">
+          <div class="term-cmd">hhuijk@system: ~/hhuijk-cx $ tail -f version.log</div>
+          <div class="term-line"><span class="c-blue">[INFO]</span> 正在初始化发布渠道 …</div>
+          <div class="term-line"><span class="c-green">[ OK ]</span>&nbsp; 已获取最新发行版 <b id="term-version">v0.6.3</b></div>
+          <div class="term-line"><span class="c-blue">[INFO]</span> 下载资源已就绪，随时可以开始。</div>
+          <div class="term-line term-cursor"><span class="c-yellow">$</span> <span class="cursor-block"></span></div>
+        </div>
+      </section>
+
+      <!-- 功能特性 -->
+      <section class="panel" id="features">
+        <div class="panel-title"><span class="play-icon">&#9654;</span> 功能特性 <span class="panel-desc">FEATURES</span></div>
+        <div class="feature-grid">
+          <article class="feature">
+            <div class="feature-icon">&#9881;</div>
+            <h3>一键入库</h3>
+            <p>输入 AppID 或 Steam 商店链接即可入库，也支持选择本地程序文件，三步完成。</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon">&#129297;</div>
+            <h3>双模式提取</h3>
+            <p>支持 GitHub 云端生成与本地离线生成两种模式，稳定与隐私任你选择。</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon">&#128241;</div>
+            <h3>实时日志</h3>
+            <p>内置终端风格日志面板，入库过程每一步实时输出，出问题也能一目了然。</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon">&#128274;</div>
+            <h3>本地优先</h3>
+            <p>核心操作在本机完成，不上传个人数据，离线环境也可正常使用。</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon">&#9889;</div>
+            <h3>轻巧快速</h3>
+            <p>单文件绿色运行、内存占用极低，不常驻后台，用完即走。</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon">&#8635;</div>
+            <h3>持续更新</h3>
+            <p>跟随 Steam 客户端持续适配，通过 Releases 频道发布，随时可下载。</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- 使用方法 -->
+      <section class="panel" id="usage">
+        <div class="panel-title"><span class="play-icon">&#9654;</span> 使用方法 <span class="panel-desc">HOW TO USE</span></div>
+        <div class="steps">
+          <div class="step"><span class="step-num">1</span><h3>获取游戏</h3><p>下方下载并运行 hhuijk 入库助手，进入主界面。</p></div>
+          <div class="step"><span class="step-num">2</span><h3>输入 AppID 或链接</h3><p>粘贴游戏的 AppID 或 Steam 商店链接，选择提取模式后点击「开始入库」。</p></div>
+          <div class="step"><span class="step-num">3</span><h3>打开 Steam 查看</h3><p>入库完成后，在 Steam 库中即可找到并启动该游戏。</p></div>
+        </div>
+      </section>
+
+      <!-- 更新日志 -->
+      <section class="panel" id="changelog">
+        <div class="panel-title"><span class="play-icon">&#9654;</span> 更新日志 <span class="panel-desc">RELEASES</span></div>
+        <div class="release-list" id="release-list"><p class="muted">正在加载更新日志…</p></div>
+        <div class="release-more">
+          <a class="btn-secondary" id="all-releases-link" href="#" target="_blank" rel="noopener">查看全部发行版 &#8599;</a>
+        </div>
+      </section>
+
+      <!-- 常见问题 -->
+      <section class="panel" id="faq">
+        <div class="panel-title"><span class="play-icon">&#9654;</span> 常见问题 <span class="panel-desc">FAQ</span></div>
+        <div class="faq-list">
+          <details>
+            <summary>入库后的游戏怎么启动？</summary>
+            <p>像普通游戏一样在 Steam 库中点击「开始」即可，同样支持 Steam 的快捷界面与截图功能。不建议对非本人拥有的游戏使用，请遵守 Steam 订阅协议。</p>
+          </details>
+          <details>
+            <summary>会修改我原有游戏的数据吗？</summary>
+            <p>不会。入库只操作 Steam 库配置与快捷方式信息，不影响原有游戏文件、存档与成就数据。</p>
+          </details>
+          <details>
+            <summary>杀毒软件提示怎么办？</summary>
+            <p>程序为开源构建且未签名，部分杀毒软件可能误报，可将程序加入信任列表或从源码自行构建。</p>
+          </details>
+          <details>
+            <summary>「GitHub 生成」模式需要什么？</summary>
+            <p>需要在设置中配置 GitHub Token（repo + workflow 权限），入库将通过云端工作流完成，更加稳定；不配置则可使用「本地生成」离线模式。</p>
+          </details>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <div class="foot-line">© 2026 hhuijk SYSTEM · 与 Valve Corporation 无关，Steam 是 Valve Corporation 的商标。</div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- 右下角浮动按钮 -->
+  <a class="fab" id="fab-download" href="#download" title="下载最新版本">&#9881;</a>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
