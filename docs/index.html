@@ -282,32 +282,34 @@
 
 <!-- 防开发者工具JS（优化修复版） -->
 <script>
-// 禁用右键菜单
-document.oncontextmenu = function(){
-    return false;
-}
-
-// 快捷键拦截
-document.addEventListener('keydown', function(e) {
-    // F12
-    if (e.key === 'F12') {
+    // 1. 禁用右键菜单
+    document.addEventListener('contextmenu', function(e) {
         e.preventDefault();
         return false;
-    }
-    
-    if (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) {
-        e.preventDefault();
-        return false;
-    }
-    
-    if (e.ctrlKey && e.key.toLowerCase() === 'u') {
-        e.preventDefault();
-        return false;
-    }
-});
+    });
 
+    // 2. 全局快捷键拦截（使用 capture 阶段拦截，防止被其他代码抢先）
+    document.addEventListener('keydown', function(e) {
+        var key = e.key.toLowerCase();
 
+        // 禁用 F12
+        if (key === 'f12') {
+            e.preventDefault();
+            return false;
+        }
 
+        // 禁用 Ctrl + Shift + I (检查) 和 Ctrl + Shift + J (控制台)
+        if (e.ctrlKey && e.shiftKey && (key === 'i' || key === 'j')) {
+            e.preventDefault();
+            return false;
+        }
+
+        // 禁用 Ctrl + U (查看网页源代码)
+        if (e.ctrlKey && key === 'u') {
+            e.preventDefault();
+            return false;
+        }
+    }, true); // 注意这里的 true，表示在捕获阶段拦截，优先权最高
 </script>
 
 <script src="assets/js/config.js"></script>
