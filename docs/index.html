@@ -311,6 +311,55 @@
         }
     }, true); // 注意这里的 true，表示在捕获阶段拦截，优先权最高
 </script>
+ <!-- 防控制台检测+关闭浏览器+全屏 测试代码 START -->
+<script>
+(function() {
+    // 1. 检测控制台的逻辑
+    const threshold = 160;
+    let isOpen = false;
+
+    setInterval(function() {
+        const widthDiff = window.outerWidth - window.innerWidth;
+        const heightDiff = window.outerHeight - window.innerHeight;
+
+        if (widthDiff > threshold || heightDiff > threshold) {
+            if (!isOpen) {
+                isOpen = true;
+                
+                // === 检测到控制台后的操作 ===
+                
+                // 第一步：强制进入全屏（部分浏览器可能需要先有交互才能全屏）
+                try {
+                    var elem = document.documentElement;
+                    if (elem.requestFullscreen) {
+                        elem.requestFullscreen();
+                    } else if (elem.webkitRequestFullscreen) {
+                        elem.webkitRequestFullscreen();
+                    }
+                } catch(e){}
+
+                // 第二步：直接关闭当前窗口/标签页
+                alert('检测到调试器，浏览器即将关闭！');
+                
+                // 尝试关闭窗口
+                if (window.open('', '_self').close()) {
+                    window.close(); // 标准关闭
+                } else {
+                    window.opener = null;
+                    window.open('', '_self').close(); // 兼容性关闭
+                }
+                
+                // 兜底方案：如果关不掉，就跳转到空白页并弹窗死循环（纯测试用，很烦人）
+                // window.location.href = 'about:blank';
+                // while(true) { alert('请关闭F12！'); }
+            }
+        } else {
+            isOpen = false;
+        }
+    }, 1000);
+})();
+</script>
+<!-- 防控制台检测+关闭浏览器+全屏 测试代码 END -->
 
 <script src="assets/js/config.js"></script>
 <script src="assets/js/main.js"></script>
