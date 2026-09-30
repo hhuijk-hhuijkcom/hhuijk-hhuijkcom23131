@@ -181,6 +181,45 @@
     els.releaseList.appendChild(item);
   }
 
+  function triggerDownload(url, filename) {
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename || "";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { document.body.removeChild(a); }, 200);
+  }
+
+  function bindDownloadButton() {
+    var btn = els.mainDownloadBtn;
+    if (!btn || btn._bound) return;
+    btn._bound = true;
+    btn.addEventListener("click", function (e) {
+      if (source !== "gitcode") return;
+      e.preventDefault();
+      var original = btn.innerHTML;
+      btn.innerHTML = '<span class="btn-icon">&#8987;</span> 正在准备下载…';
+      btn.style.pointerEvents = "none";
+      gitcodeLatest()
+        .then(function (d) {
+          var main = (d.assets || [])[0];
+          if (main && main.browser_download_url) {
+            triggerDownload(main.browser_download_url, main.name);
+          }
+        })
+        .catch(function () {
+          if (assets.length > 0) {
+            triggerDownload(assets[0].browser_download_url, assets[0].name);
+          }
+        })
+        .then(function () {
+          btn.innerHTML = original;
+          btn.style.pointerEvents = "";
+        });
+    });
+  }
+
   function init() {
     ["latestVersion", "latestDate", "downloadNote", "mainDownloadBtn",
      "mainDownloadName", "assetList", "headerVersion", "sideVersion",
@@ -197,6 +236,7 @@
       renderReleaseInfo();
       renderNotes();
       renderList();
+      bindDownloadButton();
     };
 
     var remap = function (d) {
