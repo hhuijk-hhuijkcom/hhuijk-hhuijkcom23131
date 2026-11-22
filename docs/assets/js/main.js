@@ -3,12 +3,8 @@
   "use strict";
 
   var cfg = window.SITE_CONFIG || {};
-  var repo = cfg.SITE_REPO || "hhuijk-hhuijkcom/hhuijk-cx";
-  var source = cfg.RELEASE_SOURCE || "local";
-
   var els = {};
   var latest = null;
-  var assets = [];
 
   function $(id) { return document.getElementById(kebab(id)); }
 
@@ -16,83 +12,11 @@
     return str.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
   }
 
-  function esc(text) {
-    var div = document.createElement("div");
-    div.textContent = text == null ? "" : String(text);
-    return div.innerHTML;
-  }
-
   function fmtDate(str) {
     if (!str) return "";
     var d = new Date(str);
     if (isNaN(d.getTime())) return str;
     return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-  }
-
-  function apiGet(url) {
-    return fetch(url, { method: "GET", headers: { Accept: "application/json" } })
-      .then(function (res) {
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        return res.json();
-      });
-  }
-
-  /* ---------- 数据源：GitCode ---------- */
-  function gitcodeLatest() {
-    var gc = cfg.GITCODE_REPO || repo;
-    var token = cfg.GITCODE_TOKEN || "";
-    var base = "https://api.gitcode.com/api/v5/repos/" + gc + "/releases";
-    return apiGet(base + "/latest?access_token=" + encodeURIComponent(token))
-      .then(function (rel) {
-        var tag = rel.tag_name;
-        return apiGet(base + "/" + encodeURIComponent(tag) + "?access_token=" + encodeURIComponent(token) + "&temp_download_url=true")
-          .then(function (detail) {
-            return {
-              tag: detail.tag_name,
-              name: detail.name || detail.tag_name,
-              date: detail.created_at,
-              body: detail.body,
-              assets: (detail.assets || []).map(function (a) {
-                return {
-                  name: a.name,
-                  type: a.type,
-                  browser_download_url: a.temp_download_url || a.browser_download_url
-                };
-              }).sort(function (x, y) {
-                var px = x.type === "attach" ? 0 : 1;
-                var py = y.type === "attach" ? 0 : 1;
-                return px - py;
-              })
-            };
-          });
-      });
-  }
-
-  /* ---------- 数据源：GitHub ---------- */
-  function githubLatest() {
-    var url = "https://api.github.com/repos/" + repo + "/releases/latest";
-    return fetch(url, { headers: { Accept: "application/vnd.github+json" } })
-      .then(function (res) {
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        return res.json();
-      })
-      .then(function (data) {
-        return {
-          tag: data.tag_name,
-          name: data.name || data.tag_name,
-          date: data.published_at,
-          body: data.body,
-          assets: (data.assets || []).map(function (a) {
-            return { name: a.name, browser_download_url: a.browser_download_url };
-          })
-        };
-      });
-  }
-
-  /* ---------- 本地兜底 ---------- */
-  function useLocal() {
-    latest = cfg.LOCAL_RELEASE || { tag: "v0.6.3", name: "v0.6.3", date: "", body: "" };
-    assets = cfg.LOCAL_ASSETS || [];
   }
 
   function splitLines(text) {
@@ -103,48 +27,17 @@
     if (els[id]) els[id].textContent = value;
   }
 
-  function setValue(id, value) {
-    if (els[id]) els[id].value = value;
-  }
-
   function renderReleaseInfo() {
     var tag = latest.tag || latest.name || "";
     setText("latestVersion", tag);
     setText("headerVersion", tag);
-    setText("sideVersion", tag);
-    setText("noticeVersion", tag);
     setText("termVersion", tag);
     setText("statVersion", tag);
-    setText("latestDate", latest.date ? "发布于 " + fmtDate(latest.date) : "版本信息加载失败，请前往 Releases 查看");
-
-    if (assets.length > 0) {
-      var main = assets[0];
-      setValue("mainDownloadName", main.name || "hhuijkSetup.exe");
-      var btn = els.mainDownloadBtn;
-      if (btn) {
-        btn.href = main.browser_download_url || "#download";
-        btn.download = main.name || "";
-      }
-      setText("downloadNote", "点击「开始下载」即可获取 " + (main.name || "安装程序") + "。");
-      if (els.assetList) {
-        els.assetList.innerHTML = "";
-        assets.forEach(function (a) {
-          var link = document.createElement("a");
-          link.className = "asset-link";
-          link.href = a.browser_download_url || "#";
-          link.rel = "noopener";
-          link.textContent = a.name || "下载";
-          els.assetList.appendChild(link);
-        });
-      }
-    } else {
-      setText("downloadNote", "未找到下载资源，请前往 Releases 页面获取。");
-      if (els.assetList) els.assetList.innerHTML = "<span>暂无可用资源</span>";
-    }
+    setText("latestDate", latest.date ? "发布于 " + fmtDate(latest.date) : "版本信息暂未更新");
   }
 
   function renderNotes() {
-    var lines = splitLines(latest.body || latest.name || "查看 Releases 获取详细信息。");
+    var lines = splitLines(latest.body || latest.name || "暂无更新说明。");
     if (els.releaseNotesBody) {
       els.releaseNotesBody.innerHTML = "";
       lines.forEach(function (line) {
@@ -181,81 +74,17 @@
     els.releaseList.appendChild(item);
   }
 
-  function triggerDownload(url, filename) {
-    var a = document.createElement("a");
-    a.href = url;
-    a.download = filename || "";
-    a.rel = "noopener";
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(function () { document.body.removeChild(a); }, 200);
-  }
-
-  function bindDownloadButton() {
-    var btn = els.mainDownloadBtn;
-    if (!btn || btn._bound) return;
-    btn._bound = true;
-    btn.addEventListener("click", function (e) {
-      if (source !== "gitcode") return;
-      e.preventDefault();
-      var original = btn.innerHTML;
-      btn.innerHTML = '<span class="btn-icon">&#8987;</span> 正在准备下载…';
-      btn.style.pointerEvents = "none";
-      gitcodeLatest()
-        .then(function (d) {
-          var main = (d.assets || [])[0];
-          if (main && main.browser_download_url) {
-            triggerDownload(main.browser_download_url, main.name);
-          }
-        })
-        .catch(function () {
-          if (assets.length > 0) {
-            triggerDownload(assets[0].browser_download_url, assets[0].name);
-          }
-        })
-        .then(function () {
-          btn.innerHTML = original;
-          btn.style.pointerEvents = "";
-        });
-    });
-  }
-
   function init() {
-    ["latestVersion", "latestDate", "downloadNote", "mainDownloadBtn",
-     "mainDownloadName", "assetList", "headerVersion", "sideVersion",
-     "noticeVersion", "termVersion", "statVersion", "releaseList",
-     "releaseNotesBody", "allReleasesLink"].forEach(function (id) {
+    ["latestVersion", "latestDate", "headerVersion", "termVersion",
+     "statVersion", "releaseList", "releaseNotesBody"].forEach(function (id) {
       els[id] = $(id);
     });
 
-    if (els.allReleasesLink) {
-      els.allReleasesLink.href = "https://gitcode.com/" + repo + "/releases";
-    }
+    latest = cfg.LOCAL_RELEASE || { tag: "", name: "", date: "", body: "" };
 
-    var done = function () {
-      renderReleaseInfo();
-      renderNotes();
-      renderList();
-      bindDownloadButton();
-    };
-
-    var remap = function (d) {
-      latest = { tag: d.tag, name: d.name, date: d.date, body: d.body };
-      assets = d.assets || [];
-    };
-
-    var fetcher =
-      source === "gitcode" ? gitcodeLatest :
-      source === "github" ? githubLatest : null;
-
-    if (fetcher) {
-      fetcher()
-        .then(function (d) { remap(d); done(); })
-        .catch(function () { useLocal(); done(); });
-    } else {
-      useLocal();
-      done();
-    }
+    renderReleaseInfo();
+    renderNotes();
+    renderList();
   }
 
   if (document.readyState === "loading") {
